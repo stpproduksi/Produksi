@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Produksi App</title>
+    <title>Produksi Panel v3</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --bg: #0f1923; --surface: #1a2635; --border: #263447;
-            --accent: #00c9a7; --text: #e8f0fe; --muted: #7a90a8; --danger: #ff5c5c;
+            --accent: #00c9a7; --text: #e8f0fe; --muted: #7a90a8; --danger: #ff5c5c; --wa: #25D366;
         }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding-bottom: 2rem; }
         header { background: #0a3d62; padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
@@ -20,10 +20,11 @@
         .tab { flex: 1; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--muted); font-size: 0.7rem; text-align: center; cursor: pointer; font-weight: bold; }
         .tab.active { border-color: var(--accent); color: var(--accent); background: #0d2a24; }
         .item-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 15px; position: relative; }
-        .btn-del { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
-        .cd-btn { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); text-align: left; margin-bottom: 0.8rem; cursor: pointer; }
+        .btn-del { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
+        .cd-btn { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); text-align: left; margin-bottom: 0.8rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .btn-add { width: 100%; padding: 0.7rem; background: none; border: 1.5px dashed var(--accent); color: var(--accent); border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 1rem; }
         .btn-submit { width: 100%; padding: 1rem; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-wa { width: 100%; padding: 1rem; background: var(--wa); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; display: none; text-align: center; text-decoration: none; }
         #cd-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; }
         #cd-sheet { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 1rem; max-height: 70vh; overflow-y: auto; color: black; }
         .cd-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
@@ -58,7 +59,9 @@
 
         <label>Nama Penginput</label>
         <input type="text" id="nama-input" placeholder="Nama Anda">
-        <button class="btn-submit" onclick="submitData()">KIRIM DATA</button>
+        
+        <button class="btn-submit" id="btnKirim" onclick="submitData()">KIRIM DATA</button>
+        <a id="btnWhatsApp" class="btn-wa" target="_blank">SHARE LAPORAN KE WA</a>
     </div>
 </div>
 
@@ -87,6 +90,7 @@
     function switchSheet(name) {
         currentSheet = name;
         dataItems = [];
+        document.getElementById('btnWhatsApp').style.display = 'none';
         document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.innerText === name));
         document.getElementById('shift-wrap').style.display = (name === 'THERMO' || name === 'TEHNIK') ? 'block' : 'none';
         addNewItem();
@@ -139,23 +143,44 @@
         const url = document.getElementById('webhookUrl').value;
         const nama = document.getElementById('nama-input').value;
         const tgl = document.getElementById('tgl-input').value;
+        const shift = document.getElementById('shift-input').value;
         if(!url || !nama) return alert('URL dan Nama wajib diisi!');
         
         localStorage.setItem('webhook', url); localStorage.setItem('nama', nama);
-        const btn = document.querySelector('.btn-submit');
+        const btn = document.getElementById('btnKirim');
         btn.disabled = true; btn.innerText = 'Mengirim...';
 
         try {
+            let msg = `*LAPORAN PRODUKSI - ${currentSheet}*\n📅 Tgl: ${tgl}\n👤 Oleh: ${nama}\n${shift ? '🕒 Shift: '+shift+'\n' : ''}--------------------------------\n`;
+            
             for(let item of dataItems) {
                 let p = { _sheet: currentSheet, TANGGAL: tgl, NAMA: nama };
-                if(currentSheet === 'GILING') p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "WASTE SAPUAN": item.w};
-                else if(currentSheet === 'THERMO') p = {...p, SHIFT: document.getElementById('shift-input').value, TF: item.tf, "NAMA PRODUK": item.prod, "SALDO AWAL": item.awal, MASUK: item.masuk, BOX: item.box, GRAM: item.gram, "BS SHEET": item.bs, "WASTE CUP": item.wcup, "SALDO AKHIR": item.akhir};
-                else if(currentSheet === 'EXTRUDER') p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "BS SHEET": item.bs, "WASTE BATU": item.wbatu, "WASTE SAPU": item.wsapu};
-                else if(currentSheet === 'TEHNIK') p = {...p, SHIFT: document.getElementById('shift-input').value, DIVISI: item.div, "DOWN TIME": item.dt, KETERANGAN: item.ket};
-                
+                if(currentSheet === 'GILING') {
+                    p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "WASTE SAPUAN": item.w};
+                    msg += `📦 *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nW: ${item.w}\n\n`;
+                }
+                else if(currentSheet === 'THERMO') {
+                    p = {...p, SHIFT: shift, TF: item.tf, "NAMA PRODUK": item.prod, "SALDO AWAL": item.awal, MASUK: item.masuk, BOX: item.box, GRAM: item.gram, "BS SHEET": item.bs, "WASTE CUP": item.wcup, "SALDO AKHIR": item.akhir};
+                    msg += `📟 *${item.tf} - ${item.prod}*\nBox: ${item.box} | Gr: ${item.gram}\nBS: ${item.bs} | WC: ${item.wcup}\n\n`;
+                }
+                else if(currentSheet === 'EXTRUDER') {
+                    p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "BS SHEET": item.bs, "WASTE BATU": item.wbatu, "WASTE SAPU": item.wsapu};
+                    msg += `🏗️ *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nBS: ${item.bs}\n\n`;
+                }
+                else if(currentSheet === 'TEHNIK') {
+                    p = {...p, SHIFT: shift, DIVISI: item.div, "DOWN TIME": item.dt, KETERANGAN: item.ket};
+                    msg += `🛠️ *${item.div}*\nDT: ${item.dt}\nKet: ${item.ket}\n\n`;
+                }
                 await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
             }
-            alert('Berhasil!'); switchSheet(currentSheet);
+            
+            alert('Data Berhasil Terkirim ke Google Sheets!');
+            
+            // Konfigurasi Tombol WhatsApp
+            const btnWA = document.getElementById('btnWhatsApp');
+            btnWA.href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            btnWA.style.display = 'block';
+            
         } catch(e) { alert('Error: ' + e); }
         btn.disabled = false; btn.innerText = 'KIRIM DATA';
     }
