@@ -59,7 +59,7 @@
 
         <label>Nama Penginput</label>
         <input type="text" id="nama-input" placeholder="Nama Anda">
-        
+
         <button class="btn-submit" id="btnKirim" onclick="submitData()">KIRIM DATA</button>
         <a id="btnWhatsApp" class="btn-wa" target="_blank">SHARE LAPORAN KE WA</a>
     </div>
@@ -68,7 +68,7 @@
 <div id="cd-overlay">
     <div id="cd-sheet">
         <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Pilih Item</b><button onclick="closeCd()" style="border:none; background:none; font-size:1.2rem;">✕</button></div>
-        <input type="text" id="cd-search" placeholder="Cari..." oninput="filterCd(this.value)" style="color:black; border:1px solid #ccc;">
+        <input type="text" id="cd-search" placeholder="Cari atau ketik nama baru..." oninput="filterCd(this.value)" style="color:black; border:1px solid #ccc;">
         <div id="cd-list"></div>
     </div>
 </div>
@@ -131,12 +131,22 @@
     }
 
     let activeIdx = -1;
-    function openCd(idx) { activeIdx = idx; document.getElementById('cd-overlay').style.display = 'flex'; filterCd(''); }
+    function openCd(idx) { activeIdx = idx; document.getElementById('cd-overlay').style.display = 'flex'; document.getElementById('cd-search').value = ''; filterCd(''); }
     function closeCd() { document.getElementById('cd-overlay').style.display = 'none'; }
+
+    function escQ(s) { return String(s).replace(/'/g, "\\'"); }
+
     function filterCd(q) {
         const list = currentSheet === 'GILING' ? BAHAN_LIST : PRODUK_LIST;
-        document.getElementById('cd-list').innerHTML = list.filter(s => s.toLowerCase().includes(q.toLowerCase())).map(s => `<div class="cd-item" onclick="selectItem('${s}')">${s}</div>`).join('');
+        const filtered = list.filter(s => s.toLowerCase().includes(q.toLowerCase()));
+        let html = filtered.map(s => `<div class="cd-item" onclick="selectItem('${escQ(s)}')">${s}</div>`).join('');
+        const qTrim = q.trim();
+        if (qTrim && !list.some(s => s.toLowerCase() === qTrim.toLowerCase())) {
+            html = `<div class="cd-item" style="color:#00897b;font-weight:bold;" onclick="selectItem('${escQ(qTrim)}')">+ Tambah produk baru: "${qTrim}"</div>` + html;
+        }
+        document.getElementById('cd-list').innerHTML = html || '<div style="padding:15px;color:#888;">Tidak ada. Ketik nama baru di atas lalu pilih "+ Tambah produk baru"</div>';
     }
+
     function selectItem(val) { dataItems[activeIdx].prod = val; closeCd(); renderItems(); }
 
     async function submitData() {
@@ -145,43 +155,57 @@
         const tgl = document.getElementById('tgl-input').value;
         const shift = document.getElementById('shift-input').value;
         if(!url || !nama) return alert('URL dan Nama wajib diisi!');
-        
+
         localStorage.setItem('webhook', url); localStorage.setItem('nama', nama);
         const btn = document.getElementById('btnKirim');
         btn.disabled = true; btn.innerText = 'Mengirim...';
 
-        try {
-            let msg = `*LAPORAN PRODUKSI - ${currentSheet}*\n📅 Tgl: ${tgl}\n👤 Oleh: ${nama}\n${shift ? '🕒 Shift: '+shift+'\n' : ''}--------------------------------\n`;
-            
-            for(let item of dataItems) {
-                let p = { _sheet: currentSheet, TANGGAL: tgl, NAMA: nama };
-                if(currentSheet === 'GILING') {
-                    p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "WASTE SAPUAN": item.w};
-                    msg += `📦 *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nW: ${item.w}\n\n`;
-                }
-                else if(currentSheet === 'THERMO') {
-                    p = {...p, SHIFT: shift, TF: item.tf, "NAMA PRODUK": item.prod, "SALDO AWAL": item.awal, MASUK: item.masuk, BOX: item.box, GRAM: item.gram, "BS SHEET": item.bs, "WASTE CUP": item.wcup, "SALDO AKHIR": item.akhir};
-                    msg += `📟 *${item.tf} - ${item.prod}*\nBox: ${item.box} | Gr: ${item.gram}\nBS: ${item.bs} | WC: ${item.wcup}\n\n`;
-                }
-                else if(currentSheet === 'EXTRUDER') {
-                    p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "BS SHEET": item.bs, "WASTE BATU": item.wbatu, "WASTE SAPU": item.wsapu};
-                    msg += `🏗️ *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nBS: ${item.bs}\n\n`;
-                }
-                else if(currentSheet === 'TEHNIK') {
-                    p = {...p, SHIFT: shift, DIVISI: item.div, "DOWN TIME": item.dt, KETERANGAN: item.ket};
-                    msg += `🛠️ *${item.div}*\nDT: ${item.dt}\nKet: ${item.ket}\n\n`;
-                }
-                await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
+        let msg = `*LAPORAN PRODUKSI - ${currentSheet}*\n📅 Tgl: ${tgl}\n👤 Oleh: ${nama}\n${shift ? '🕒 Shift: '+shift+'\n' : ''}--------------------------------\n`;
+        let okCount = 0, failList = [];
+
+        for(let item of dataItems) {
+            let p = { _sheet: currentSheet, TANGGAL: tgl, NAMA: nama };
+            let label = item.prod || item.div || '-';
+            if(currentSheet === 'GILING') {
+                p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "WASTE SAPUAN": item.w};
+                msg += `📦 *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nW: ${item.w}\n\n`;
             }
-            
-            alert('Data Berhasil Terkirim ke Google Sheets!');
-            
-            // Konfigurasi Tombol WhatsApp
-            const btnWA = document.getElementById('btnWhatsApp');
-            btnWA.href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-            btnWA.style.display = 'block';
-            
-        } catch(e) { alert('Error: ' + e); }
+            else if(currentSheet === 'THERMO') {
+                p = {...p, SHIFT: shift, TF: item.tf, "NAMA PRODUK": item.prod, "SALDO AWAL": item.awal, MASUK: item.masuk, BOX: item.box, GRAM: item.gram, "BS SHEET": item.bs, "WASTE CUP": item.wcup, "SALDO AKHIR": item.akhir};
+                msg += `📟 *${item.tf} - ${item.prod}*\nBox: ${item.box} | Gr: ${item.gram}\nBS: ${item.bs} | WC: ${item.wcup}\n\n`;
+            }
+            else if(currentSheet === 'EXTRUDER') {
+                p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "BS SHEET": item.bs, "WASTE BATU": item.wbatu, "WASTE SAPU": item.wsapu};
+                msg += `🏗️ *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nBS: ${item.bs}\n\n`;
+            }
+            else if(currentSheet === 'TEHNIK') {
+                p = {...p, SHIFT: shift, DIVISI: item.div, "DOWN TIME": item.dt, KETERANGAN: item.ket};
+                msg += `🛠️ *${item.div}*\nDT: ${item.dt}\nKet: ${item.ket}\n\n`;
+            }
+
+            try {
+                const res = await fetch(url, { method: 'POST', body: JSON.stringify(p) });
+                const text = (await res.text()).trim();
+                if (text === 'OK' || text === 'UPDATED') {
+                    okCount++;
+                } else {
+                    failList.push(`${label}: ${text || 'gagal'}`);
+                }
+            } catch(err) {
+                failList.push(`${label}: koneksi gagal`);
+            }
+        }
+
+        if (failList.length === 0) {
+            alert(`✅ Semua data (${okCount}) berhasil masuk ke Sheets!`);
+        } else {
+            alert(`⚠️ ${okCount} berhasil, ${failList.length} GAGAL:\n\n${failList.join('\n')}`);
+        }
+
+        const btnWA = document.getElementById('btnWhatsApp');
+        btnWA.href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        btnWA.style.display = 'block';
+
         btn.disabled = false; btn.innerText = 'KIRIM DATA';
     }
 </script>
