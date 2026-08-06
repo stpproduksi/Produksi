@@ -1,242 +1,164 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Input Data Produksi</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0f1923; --surface: #1a2635; --border: #263447;
-    --accent: #00c9a7; --accent2: #0077ff; --text: #e8f0fe;
-    --muted: #7a90a8; --danger: #ff5c5c; --font: 'Segoe UI', system-ui, sans-serif;
-  }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; padding-bottom: 2rem; }
-  header { background: linear-gradient(135deg, #0d2137 0%, #0a3d62 100%); padding: 1.25rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-  header h1 { font-size: 1.1rem; font-weight: 700; text-align: center; }
-  .container { padding: 1rem; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
-  .card h2 { font-size: 0.8rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; }
-  .field { margin-bottom: 0.9rem; }
-  label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; }
-  input, select, textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); font-size: 0.95rem; }
-  .sheet-tabs { display: flex; gap: 6px; margin-bottom: 1rem; }
-  .tab { flex: 1; padding: 0.6rem; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--muted); font-size: 0.78rem; font-weight: 700; cursor: pointer; text-align: center; }
-  .tab.active { border-color: var(--accent); color: var(--accent); background: #0d2a24; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-  .btn-submit { width: 100%; background: linear-gradient(135deg, var(--accent), #0099ff); color: #fff; border: none; border-radius: 10px; padding: 1rem; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 1rem; }
-  .cd-btn { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); text-align: left; cursor: pointer; position: relative; margin-bottom: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cd-btn.placeholder { color: var(--muted); }
-  #cd-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; }
-  #cd-sheet { background: #fff; width: 100%; border-radius: 20px 20px 0 0; padding: 1rem; max-height: 80vh; overflow-y: auto; color: #000; }
-  .cd-item { padding: 1rem; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-  .item-box { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 0.75rem; margin-bottom: 1rem; position: relative; }
-  .btn-del { position: absolute; top: -10px; right: -5px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; z-index: 5; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Produksi App</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0f1923; --surface: #1a2635; --border: #263447;
+            --accent: #00c9a7; --text: #e8f0fe; --muted: #7a90a8; --danger: #ff5c5c;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding-bottom: 2rem; }
+        header { background: #0a3d62; padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .container { padding: 1rem; max-width: 500px; margin: auto; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+        label { display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; font-weight: bold; }
+        input, select, textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); font-size: 0.9rem; margin-bottom: 0.8rem; }
+        .sheet-tabs { display: flex; gap: 5px; margin-bottom: 1rem; }
+        .tab { flex: 1; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--muted); font-size: 0.7rem; text-align: center; cursor: pointer; font-weight: bold; }
+        .tab.active { border-color: var(--accent); color: var(--accent); background: #0d2a24; }
+        .item-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 15px; position: relative; }
+        .btn-del { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+        .cd-btn { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); text-align: left; margin-bottom: 0.8rem; cursor: pointer; }
+        .btn-add { width: 100%; padding: 0.7rem; background: none; border: 1.5px dashed var(--accent); color: var(--accent); border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 1rem; }
+        .btn-submit { width: 100%; padding: 1rem; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        #cd-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; }
+        #cd-sheet { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 1rem; max-height: 70vh; overflow-y: auto; color: black; }
+        .cd-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
 </head>
 <body>
 
-<header><h1>📊 Input Data Produksi</h1></header>
+<header><h3>📊 PRODUKSI PANEL</h3></header>
 
 <div class="container">
-  <div class="card">
-    <h2>⚙ Koneksi Google Sheets</h2>
-    <input type="url" id="webhookUrl" placeholder="Tempel URL Apps Script di sini">
-  </div>
+    <div class="card">
+        <label>URL Google Script</label>
+        <input type="url" id="webhookUrl" placeholder="Tempel URL Script di sini">
+    </div>
 
-  <div class="card">
     <div class="sheet-tabs">
-      <div class="tab active" onclick="gantiSheet('GILING')">GILING</div>
-      <div class="tab" onclick="gantiSheet('THERMO')">THERMO</div>
-      <div class="tab" onclick="gantiSheet('EXTRUDER')">EXTRUDER</div>
-      <div class="tab" onclick="gantiSheet('TEHNIK')">TEHNIK</div>
+        <div class="tab active" onclick="switchSheet('GILING')">GILING</div>
+        <div class="tab" onclick="switchSheet('THERMO')">THERMO</div>
+        <div class="tab" onclick="switchSheet('EXTRUDER')">EXTRUDER</div>
+        <div class="tab" onclick="switchSheet('TEHNIK')">TEHNIK</div>
     </div>
 
-    <!-- GILING -->
-    <div id="form-GILING">
-      <div class="field"><label>Tanggal</label><input type="date" id="g-TANGGAL"></div>
-      <div id="giling-list"></div>
-      <button type="button" class="btn-submit" style="background:none; border:1.5px dashed var(--accent); color:var(--accent); padding:0.6rem; margin-top:0;" onclick="tambahGiling()">+ Tambah Bahan</button>
-    </div>
+    <div class="card">
+        <div id="common-fields">
+            <div class="field"><label>Tanggal</label><input type="date" id="tgl-input"></div>
+            <div id="shift-wrap" style="display:none"><label>Shift</label><select id="shift-input"><option value="">Pilih Shift</option><option>SHIFT 1</option><option>SHIFT 2</option><option>SHIFT 3</option></select></div>
+        </div>
 
-    <!-- THERMO -->
-    <div id="form-THERMO" style="display:none">
-      <div class="row2">
-        <div class="field"><label>Tanggal</label><input type="date" id="t-TANGGAL"></div>
-        <div class="field"><label>Shift</label><select id="t-SHIFT"><option value="">Pilih</option><option>SHIFT 1</option><option>SHIFT 2</option><option>SHIFT 3</option></select></div>
-      </div>
-      <div id="thermo-list"></div>
-      <button type="button" class="btn-submit" style="background:none; border:1.5px dashed var(--accent); color:var(--accent); padding:0.6rem; margin-top:0;" onclick="tambahThermo()">+ Tambah Produk THERMO</button>
-    </div>
+        <div id="items-container"></div>
+        <button class="btn-add" onclick="addNewItem()">+ TAMBAH DATA</button>
 
-    <!-- EXTRUDER -->
-    <div id="form-EXTRUDER" style="display:none">
-      <div class="field"><label>Tanggal</label><input type="date" id="e-TANGGAL"></div>
-      <div id="extruder-list"></div>
-      <button type="button" class="btn-submit" style="background:none; border:1.5px dashed var(--accent); color:var(--accent); padding:0.6rem; margin-top:0;" onclick="tambahExtruder()">+ Tambah Produk</button>
+        <label>Nama Penginput</label>
+        <input type="text" id="nama-input" placeholder="Nama Anda">
+        <button class="btn-submit" onclick="submitData()">KIRIM DATA</button>
     </div>
-
-    <!-- TEHNIK -->
-    <div id="form-TEHNIK" style="display:none">
-      <div class="row2">
-        <div class="field"><label>Tanggal</label><input type="date" id="tk-TANGGAL"></div>
-        <div class="field"><label>Shift</label><select id="tk-SHIFT"><option value="">Pilih</option><option>SHIFT 1</option><option>SHIFT 2</option><option>SHIFT 3</option></select></div>
-      </div>
-      <div id="tehnik-list"></div>
-      <button type="button" class="btn-submit" style="background:none; border:1.5px dashed var(--accent); color:var(--accent); padding:0.6rem; margin-top:0;" onclick="tambahTehnik()">+ Tambah Divisi</button>
-    </div>
-
-    <div class="field" style="margin-top:1.5rem; border-top:1px solid var(--border); padding-top:1rem;">
-      <label>Nama Penginput</label>
-      <input type="text" id="inputNama" placeholder="Ketik nama Anda...">
-    </div>
-    <button class="btn-submit" id="btnSubmit" onclick="kirimData()">Kirim ke Google Sheets</button>
-  </div>
 </div>
 
 <div id="cd-overlay">
-  <div id="cd-sheet">
-    <div style="display:flex; justify-content:space-between; margin-bottom:1rem;"><b id="cd-title">Pilih Item</b><button onclick="tutupCd()" style="border:none; background:none; font-size:1.5rem; color:#888;">✕</button></div>
-    <input type="text" id="cd-search" placeholder="Cari..." oninput="filterCd(this.value)" style="border:1px solid #ccc; color:#000; margin-bottom:1rem; background:#f9f9f9;">
-    <div id="cd-list"></div>
-  </div>
+    <div id="cd-sheet">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Pilih Item</b><button onclick="closeCd()" style="border:none; background:none; font-size:1.2rem;">✕</button></div>
+        <input type="text" id="cd-search" placeholder="Cari..." oninput="filterCd(this.value)" style="color:black; border:1px solid #ccc;">
+        <div id="cd-list"></div>
+    </div>
 </div>
 
 <script>
-  const BAHAN_LIST = ["AVALAN BARRY CRUSHER PP Kw1","AVALAN PREFORM","INNOPLUS","LD PETLIN N 125 Y","PP Avalan NATURAL GILINGAN","PP COSMO FY3012E","PP COSMOPLENE W531P","PP GRADE NSY114G-P","PP H456 JY","PP MASPLENE 3160","PP MASPLENE 3352","PP MASPLENE 3355","PP MASPLENE MAG 2160","PP MASPLENE MAG 3352","PP MASPLENE MAG 3355","AVALAN BOTOL CRUSHER PP Kw1","PP PETRON 1102K","PP PREFCHEM PH404","PP PUTIH (ASIA PLASTIK)","PP PUTIH SUSU (ANDY)","PP SABIC 5002P","PP SABIC 5052P","PP SCG ELPRO P 400 S","PP SCG ELPRO P 401 S","PP TRILENE HE 2.0 TF","PP TRILENE HY 3,8 FY","PP MOPLEN MIXEDGRADE","IPP RB 307 MO","PP MASPLENE 2158","PP MASPLENE 2159","LOTTE HOPELEN PP Y-130","PP GY130","PP SABIC PH 503","POE WANSUPER 5057","PP W331","JINNENG HP550J","PPH - T03","PPH - T035","PP T30S"];
-  const PRODUK_LIST = ["60 ML JELLY","90 ML JELLY","6 OZ NATURAL","8 OZ NATURAL","10 OZ NATURAL","12 OZ NATURAL","12 OZ NATURAL 7 gr","14 OZ NATURAL","16 OZ NATURAL","BAHAN PRINTING 5,5 gr","16 SLIM","18 SLIM 9 gr","18 SLIM 7,5 gr","18 SLIM 7,0 gr","22 SLIM 9 gr","22 SLIM 8,5 gr","22 SLIM 8,0 gr","22 SLIM 7,0 gr","SLOP PISAH 8,5 gr","22 SLIM BAHAN PRINTING 8,0 gr","BAHAN PRINTING 8,5 gr","18 BIG ISI 50 PCS 7,0 gr","18 BIG ISI 25 PCS 7,0 gr","22 BIG ISI 50 PCS 7,0 gr","22 BIG ISI 50 PCS 8 gr","22 BIG ISI 50 PCS 8,5 gr","26 BIG 8,0 gr BAHAN PRINTING @800","26 BIG ISI 25 PCS 8,0 gr","22 BIG ISI 50 PCS 8,0 gr BAHAN PRINTING","12 OVAL 5,0 gr ISI 50 PCS","14 OVAL 6,0 gr ISI 50 PCS","14 OVAL 6,0 GR PRINTING","16 OVAL 6,5 gr ISI 50 PCS","18 OVAL 7,0 gr ISI 50 PCS","22 OVAL 7,0 gr ISI 50 PCS","22 OVAL 8,0 gr ISI 50 PCS","8 SQUARE","12 SQUARE","16 SQUARE","22 SQUARE","8 SQUARE HANYA BODY","12 SQUARE HANYA BODY","16 SQUARE HANYA BODY","22 SQUARE HANYA BODY","TUTUP SQUARE","10 OZ HALLO REGULER","12 OZ HALLO REGULER","14 OZ HALLO REGULER","16 OZ HALLO REGULER","18 OZ HALLO BIG","18 OZ HALLO BIG 7GR TRIAL","22 OZ HALLO BIG 7GR TRIAL","22 OZ HALLO BIG","18 BIG HOK GITAR (MERAH)","22 BIG HOK GITAR (MERAH)","220 ML AMDK"];
+    const BAHAN_LIST = ["AVALAN BARRY CRUSHER PP Kw1","AVALAN PREFORM","INNOPLUS","LD PETLIN N 125 Y","PP Avalan NATURAL GILINGAN","PP COSMO FY3012E","PP COSMOPLENE W531P","PP GRADE NSY114G-P","PP H456 JY","PP MASPLENE 3160","PP MASPLENE 3352","PP MASPLENE 3355","PP MASPLENE MAG 2160","PP MASPLENE MAG 3352","PP MASPLENE MAG 3355","AVALAN BOTOL CRUSHER PP Kw1","PP PETRON 1102K","PP PREFCHEM PH404","PP PUTIH (ASIA PLASTIK)","PP PUTIH SUSU (ANDY)","PP SABIC 5002P","PP SABIC 5052P","PP SCG ELPRO P 400 S","PP SCG ELPRO P 401 S","PP TRILENE HE 2.0 TF","PP TRILENE HY 3,8 FY","PP MOPLEN MIXEDGRADE","IPP RB 307 MO","PP MASPLENE 2158","PP MASPLENE 2159","LOTTE HOPELEN PP Y-130","PP GY130","PP SABIC PH 503","POE WANSUPER 5057","PP W331","JINNENG HP550J","PPH - T03","PPH - T035","PP T30S"];
+    const PRODUK_LIST = ["60 ML JELLY","90 ML JELLY","6 OZ NATURAL","8 OZ NATURAL","10 OZ NATURAL","12 OZ NATURAL","12 OZ NATURAL 7 gr","14 OZ NATURAL","16 OZ NATURAL","BAHAN PRINTING 5,5 gr","16 SLIM","18 SLIM 9 gr","18 SLIM 7,5 gr","18 SLIM 7,0 gr","22 SLIM 9 gr","22 SLIM 8,5 gr","22 SLIM 8,0 gr","22 SLIM 7,0 gr","SLOP PISAH 8,5 gr","22 SLIM BAHAN PRINTING 8,0 gr","BAHAN PRINTING 8,5 gr","18 BIG ISI 50 PCS 7,0 gr","18 BIG ISI 25 PCS 7,0 gr","22 BIG ISI 50 PCS 7,0 gr","22 BIG ISI 50 PCS 8 gr","22 BIG ISI 50 PCS 8,5 gr","26 BIG 8,0 gr BAHAN PRINTING @800","26 BIG ISI 25 PCS 8,0 gr","22 BIG ISI 50 PCS 8,0 gr BAHAN PRINTING","12 OVAL 5,0 gr ISI 50 PCS","14 OVAL 6,0 gr ISI 50 PCS","14 OVAL 6,0 GR PRINTING","16 OVAL 6,5 gr ISI 50 PCS","18 OVAL 7,0 gr ISI 50 PCS","22 OVAL 7,0 gr ISI 50 PCS","22 OVAL 8,0 gr ISI 50 PCS","8 SQUARE","12 SQUARE","16 SQUARE","22 SQUARE","8 SQUARE HANYA BODY","12 SQUARE HANYA BODY","16 SQUARE HANYA BODY","22 SQUARE HANYA BODY","TUTUP SQUARE","10 OZ HALLO REGULER","12 OZ HALLO REGULER","14 OZ HALLO REGULER","16 OZ HALLO REGULER","18 OZ HALLO BIG","18 OZ HALLO BIG 7GR TRIAL","22 OZ HALLO BIG 7GR TRIAL","22 OZ HALLO BIG","18 BIG HOK GITAR (MERAH)","22 BIG HOK GITAR (MERAH)","220 ML AMDK"];
 
-  let activeSheet = 'GILING';
-  let gilingRows = [], thermoRows = [], extruderRows = [], tehnikRows = [];
+    let currentSheet = 'GILING';
+    let dataItems = [];
 
-  window.onload = () => {
-    const tgl = new Date().toISOString().split('T')[0];
-    ['g-TANGGAL','t-TANGGAL','e-TANGGAL','tk-TANGGAL'].forEach(id => document.getElementById(id).value = tgl);
-    const savedUrl = localStorage.getItem('prod_webhook');
-    if(savedUrl) document.getElementById('webhookUrl').value = savedUrl;
-    const savedNama = localStorage.getItem('prod_nama');
-    if(savedNama) document.getElementById('inputNama').value = savedNama;
-    tambahGiling(); tambahThermo(); tambahExtruder(); tambahTehnik();
-  };
+    window.onload = () => {
+        document.getElementById('tgl-input').value = new Date().toISOString().split('T')[0];
+        if(localStorage.getItem('webhook')) document.getElementById('webhookUrl').value = localStorage.getItem('webhook');
+        if(localStorage.getItem('nama')) document.getElementById('nama-input').value = localStorage.getItem('nama');
+        switchSheet('GILING');
+    };
 
-  function gantiSheet(s) {
-    activeSheet = s;
-    ['GILING','THERMO','EXTRUDER','TEHNIK'].forEach(id => { document.getElementById('form-'+id).style.display = (id === s ? 'block' : 'none'); });
-    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.innerText === s));
-  }
+    function switchSheet(name) {
+        currentSheet = name;
+        dataItems = [];
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.innerText === name));
+        document.getElementById('shift-wrap').style.display = (name === 'THERMO' || name === 'TEHNIK') ? 'block' : 'none';
+        addNewItem();
+    }
 
-  function tambahGiling() { gilingRows.push({produk:'', s1:'', s2:'', s3:'', waste:''}); renderGiling(); }
-  function hapusGiling(i) { gilingRows.splice(i,1); renderGiling(); }
-  function renderGiling() {
-    document.getElementById('giling-list').innerHTML = gilingRows.map((r, i) => `
-      <div class="item-box">
-        <button class="btn-del" onclick="hapusGiling(${i})">✕</button>
-        <label>Bahan ${i+1}</label>
-        <button class="cd-btn ${r.produk?'':'placeholder'}" onclick="bukaCd('GILING', ${i})">${r.produk || 'Pilih Bahan'}</button>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:5px;">
-          <input type="number" placeholder="S1" value="${r.s1}" oninput="gilingRows[${i}].s1=this.value">
-          <input type="number" placeholder="S2" value="${r.s2}" oninput="gilingRows[${i}].s2=this.value">
-          <input type="number" placeholder="S3" value="${r.s3}" oninput="gilingRows[${i}].s3=this.value">
-          <input type="number" placeholder="Waste" value="${r.waste}" oninput="gilingRows[${i}].waste=this.value">
-        </div>
-      </div>`).join('');
-  }
+    function addNewItem() {
+        let obj = { id: Date.now() };
+        if(currentSheet === 'GILING') obj = {...obj, prod:'', s1:'', s2:'', s3:'', w:''};
+        else if(currentSheet === 'THERMO') obj = {...obj, tf:'', prod:'', awal:'', masuk:'', box:'', gram:'', bs:'', wcup:'', akhir:''};
+        else if(currentSheet === 'EXTRUDER') obj = {...obj, prod:'', s1:'', s2:'', s3:'', bs:'', wbatu:'', wsapu:''};
+        else if(currentSheet === 'TEHNIK') obj = {...obj, div:'', dt:'', ket:''};
+        dataItems.push(obj);
+        renderItems();
+    }
 
-  function tambahThermo() { thermoRows.push({tf:'', produk:'', awal:'', masuk:'', box:'', gram:'', bs:'', wcup:'', akhir:''}); renderThermo(); }
-  function hapusThermo(i) { thermoRows.splice(i,1); renderThermo(); }
-  function renderThermo() {
-    document.getElementById('thermo-list').innerHTML = thermoRows.map((r, i) => `
-      <div class="item-box">
-        <button class="btn-del" onclick="hapusThermo(${i})">✕</button>
-        <div class="row2" style="margin-bottom:5px">
-          <div><label>Mesin</label><select onchange="thermoRows[${i}].tf=this.value"><option value="">Pilih</option>${[4,5,6,7,8,9,10,11,12,13,14,15,16].map(v => `<option ${r.tf==='TF'+v?'selected':''}>TF${v}</option>`).join('')}</select></div>
-          <div><label>Produk</label><button class="cd-btn ${r.produk?'':'placeholder'}" onclick="bukaCd('THERMO', ${i})">${r.produk || 'Pilih Produk'}</button></div>
-        </div>
-        <div class="row2">
-          <input type="number" placeholder="Saldo Awal" value="${r.awal}" oninput="thermoRows[${i}].awal=this.value">
-          <input type="number" placeholder="Masuk" value="${r.masuk}" oninput="thermoRows[${i}].masuk=this.value">
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:5px; margin-top:5px;">
-          <input type="number" placeholder="Box" value="${r.box}" oninput="thermoRows[${i}].box=this.value">
-          <input type="number" placeholder="Gram" value="${r.gram}" oninput="thermoRows[${i}].gram=this.value">
-          <input type="number" placeholder="BS" value="${r.bs}" oninput="thermoRows[${i}].bs=this.value">
-          <input type="number" placeholder="W.Cup" value="${r.wcup}" oninput="thermoRows[${i}].wcup=this.value">
-        </div>
-        <input type="number" placeholder="Saldo Akhir" style="margin-top:5px" value="${r.akhir}" oninput="thermoRows[${i}].akhir=this.value">
-      </div>`).join('');
-  }
+    function renderItems() {
+        const container = document.getElementById('items-container');
+        container.innerHTML = dataItems.map((item, i) => {
+            let html = `<div class="item-box"><button class="btn-del" onclick="dataItems.splice(${i},1);renderItems()">✕</button>`;
+            if(currentSheet !== 'TEHNIK') {
+                html += `<label>Item / Produk</label><button class="cd-btn" onclick="openCd(${i})">${item.prod || '— Pilih Item —'}</button>`;
+            }
+            if(currentSheet === 'GILING') {
+                html += `<div class="row2"><input type="number" placeholder="S1" oninput="dataItems[${i}].s1=this.value" value="${item.s1}"><input type="number" placeholder="S2" oninput="dataItems[${i}].s2=this.value" value="${item.s2}"></div><div class="row2"><input type="number" placeholder="S3" oninput="dataItems[${i}].s3=this.value" value="${item.s3}"><input type="number" placeholder="Waste" oninput="dataItems[${i}].w=this.value" value="${item.w}"></div>`;
+            } else if(currentSheet === 'THERMO') {
+                html += `<label>Mesin TF</label><select onchange="dataItems[${i}].tf=this.value"><option value="">Pilih</option>${[4,5,6,7,8,9,10,11,12,13,14,15,16].map(v => `<option ${item.tf==='TF'+v?'selected':''}>TF${v}</option>`).join('')}</select>
+                <div class="row2"><input type="number" placeholder="Awal" oninput="dataItems[${i}].awal=this.value" value="${item.awal}"><input type="number" placeholder="Masuk" oninput="dataItems[${i}].masuk=this.value" value="${item.masuk}"></div>
+                <div class="row2"><input type="number" placeholder="Box" oninput="dataItems[${i}].box=this.value" value="${item.box}"><input type="number" placeholder="Gram" oninput="dataItems[${i}].gram=this.value" value="${item.gram}"></div>
+                <div class="row2"><input type="number" placeholder="BS" oninput="dataItems[${i}].bs=this.value" value="${item.bs}"><input type="number" placeholder="Waste Cup" oninput="dataItems[${i}].wcup=this.value" value="${item.wcup}"></div>
+                <input type="number" placeholder="Saldo Akhir" oninput="dataItems[${i}].akhir=this.value" value="${item.akhir}">`;
+            } else if(currentSheet === 'EXTRUDER') {
+                html += `<div class="row2"><input type="number" placeholder="S1" oninput="dataItems[${i}].s1=this.value" value="${item.s1}"><input type="number" placeholder="S2" oninput="dataItems[${i}].s2=this.value" value="${item.s2}"></div><div class="row2"><input type="number" placeholder="S3" oninput="dataItems[${i}].s3=this.value" value="${item.s3}"><input type="number" placeholder="BS" oninput="dataItems[${i}].bs=this.value" value="${item.bs}"></div><div class="row2"><input type="number" placeholder="W.Batu" oninput="dataItems[${i}].wbatu=this.value" value="${item.wbatu}"><input type="number" placeholder="W.Sapu" oninput="dataItems[${i}].wsapu=this.value" value="${item.wsapu}"></div>`;
+            } else if(currentSheet === 'TEHNIK') {
+                html += `<label>Divisi</label><select onchange="dataItems[${i}].div=this.value"><option value="">Pilih</option><option ${item.div==='GILING'?'selected':''}>GILING</option><option ${item.div==='THERMO'?'selected':''}>THERMO</option><option ${item.div==='EXTRUDER'?'selected':''}>EXTRUDER</option></select><input type="text" placeholder="Down Time" oninput="dataItems[${i}].dt=this.value" value="${item.dt}"><textarea placeholder="Keterangan" oninput="dataItems[${i}].ket=this.value">${item.ket}</textarea>`;
+            }
+            return html + `</div>`;
+        }).join('');
+    }
 
-  function tambahExtruder() { extruderRows.push({produk:'', s1:'', s2:'', s3:'', bs:'', wbatu:'', wsapu:''}); renderExtruder(); }
-  function hapusExtruder(i) { extruderRows.splice(i,1); renderExtruder(); }
-  function renderExtruder() {
-    document.getElementById('extruder-list').innerHTML = extruderRows.map((r, i) => `
-      <div class="item-box">
-        <button class="btn-del" onclick="hapusExtruder(${i})">✕</button>
-        <label>Produk ${i+1}</label>
-        <button class="cd-btn ${r.produk?'':'placeholder'}" onclick="bukaCd('EXTRUDER', ${i})">${r.produk || 'Pilih Produk'}</button>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px;">
-          <input type="number" placeholder="S1" value="${r.s1}" oninput="extruderRows[${i}].s1=this.value">
-          <input type="number" placeholder="S2" value="${r.s2}" oninput="extruderRows[${i}].s2=this.value">
-          <input type="number" placeholder="S3" value="${r.s3}" oninput="extruderRows[${i}].s3=this.value">
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; margin-top:5px;">
-          <input type="number" placeholder="BS" value="${r.bs}" oninput="extruderRows[${i}].bs=this.value">
-          <input type="number" placeholder="W.Batu" value="${r.wbatu}" oninput="extruderRows[${i}].wbatu=this.value">
-          <input type="number" placeholder="W.Sapu" value="${r.wsapu}" oninput="extruderRows[${i}].wsapu=this.value">
-        </div>
-      </div>`).join('');
-  }
+    let activeIdx = -1;
+    function openCd(idx) { activeIdx = idx; document.getElementById('cd-overlay').style.display = 'flex'; filterCd(''); }
+    function closeCd() { document.getElementById('cd-overlay').style.display = 'none'; }
+    function filterCd(q) {
+        const list = currentSheet === 'GILING' ? BAHAN_LIST : PRODUK_LIST;
+        document.getElementById('cd-list').innerHTML = list.filter(s => s.toLowerCase().includes(q.toLowerCase())).map(s => `<div class="cd-item" onclick="selectItem('${s}')">${s}</div>`).join('');
+    }
+    function selectItem(val) { dataItems[activeIdx].prod = val; closeCd(); renderItems(); }
 
-  function tambahTehnik() { tehnikRows.push({divisi:'', dt:'', ket:''}); renderTehnik(); }
-  function hapusTehnik(i) { tehnikRows.splice(i,1); renderTehnik(); }
-  function renderTehnik() {
-    document.getElementById('tehnik-list').innerHTML = tehnikRows.map((r, i) => `
-      <div class="item-box">
-        <button class="btn-del" onclick="hapusTehnik(${i})">✕</button>
-        <select onchange="tehnikRows[${i}].divisi=this.value"><option value="">Pilih Divisi</option><option ${r.divisi==='GILING'?'selected':''}>GILING</option><option ${r.divisi==='THERMO'?'selected':''}>THERMO</option><option ${r.divisi==='EXTRUDER'?'selected':''}>EXTRUDER</option></select>
-        <input type="text" placeholder="Down Time" style="margin-top:5px" value="${r.dt}" oninput="tehnikRows[${i}].dt=this.value">
-        <textarea placeholder="Keterangan" style="margin-top:5px; height:50px;" oninput="tehnikRows[${i}].ket=this.value">${r.ket}</textarea>
-      </div>`).join('');
-  }
+    async function submitData() {
+        const url = document.getElementById('webhookUrl').value;
+        const nama = document.getElementById('nama-input').value;
+        const tgl = document.getElementById('tgl-input').value;
+        if(!url || !nama) return alert('URL dan Nama wajib diisi!');
+        
+        localStorage.setItem('webhook', url); localStorage.setItem('nama', nama);
+        const btn = document.querySelector('.btn-submit');
+        btn.disabled = true; btn.innerText = 'Mengirim...';
 
-  let curType = '', curIdx = 0;
-  function bukaCd(type, idx) { curType = type; curIdx = idx; document.getElementById('cd-overlay').style.display = 'flex'; filterCd(''); }
-  function tutupCd() { document.getElementById('cd-overlay').style.display = 'none'; }
-  function filterCd(q) {
-    const list = curType === 'GILING' ? BAHAN_LIST : PRODUK_LIST;
-    document.getElementById('cd-list').innerHTML = list.filter(item => item.toLowerCase().includes(q.toLowerCase())).map(v => `<div class="cd-item" onclick="pilihCd('${v}')">${v}</div>`).join('');
-  }
-  function pilihCd(v) {
-    if(curType === 'GILING') gilingRows[curIdx].produk = v;
-    else if(curType === 'THERMO') thermoRows[curIdx].produk = v;
-    else if(curType === 'EXTRUDER') extruderRows[curIdx].produk = v;
-    tutupCd(); renderGiling(); renderThermo(); renderExtruder();
-  }
-
-  async function kirimData() {
-    const url = document.getElementById('webhookUrl').value;
-    const nama = document.getElementById('inputNama').value;
-    if(!url || !nama) return alert('Lengkapi URL dan Nama!');
-    localStorage.setItem('prod_webhook', url); localStorage.setItem('prod_nama', nama);
-    const btn = document.getElementById('btnSubmit'); btn.disabled = true; btn.innerText = 'Mengirim...';
-    try {
-      if(activeSheet === 'GILING') {
-        const tgl = document.getElementById('g-TANGGAL').value;
-        for(let r of gilingRows.filter(x => x.produk)) await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ _sheet: 'GILING', TANGGAL: tgl, "NAMA PRODUK": r.produk, SHIFT1: r.s1, SHIFT2: r.s2, SHIFT3: r.s3, "WASTE SAPUAN": r.waste, NAMA: nama }) });
-      } else if(activeSheet === 'THERMO') {
-        const tgl = document.getElementById('t-TANGGAL').value; const shf = document.getElementById('t-SHIFT').value;
-        for(let r of thermoRows.filter(x => x.produk)) await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ _sheet: 'THERMO', TANGGAL: tgl, SHIFT: shf, TF: r.tf, "NAMA PRODUK": r.produk, "SALDO AWAL": r.awal, MASUK: r.masuk, BOX: r.box, GRAM: r.gram, "BS SHEET": r.bs, "WASTE CUP": r.wcup, "SALDO AKHIR": r.akhir, NAMA: nama }) });
-      } else if(activeSheet === 'EXTRUDER') {
-        const tgl = document.getElementById('e-TANGGAL').value;
-        for(let r of extruderRows.filter(x => x.produk)) await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ _sheet: 'EXTRUDER', TANGGAL: tgl, "NAMA PRODUK": r.produk, SHIFT1: r.s1, SHIFT2: r.s2, SHIFT3: r.s3, "BS SHEET": r.bs, "WASTE BATU": r.wbatu, "WASTE SAPU": r.wsapu, NAMA: nama }) });
-      } else if(activeSheet === 'TEHNIK') {
-        const tgl = document.getElementById('tk-TANGGAL').value; const shf = document.getElementById('tk-SHIFT').value;
-        for(let r of tehnikRows.filter(x => x.divisi)) await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ _sheet: 'TEHNIK', TANGGAL: tgl, SHIFT: shf, DIVISI: r.divisi, "DOWN TIME": r.dt, KETERANGAN: r.ket, NAMA: nama }) });
-      }
-      alert('Berhasil!'); location.reload();
-    } catch(e) { alert('Gagal: ' + e); }
-    btn.disabled = false; btn.innerText = 'Kirim ke Google Sheets';
-  }
+        try {
+            for(let item of dataItems) {
+                let p = { _sheet: currentSheet, TANGGAL: tgl, NAMA: nama };
+                if(currentSheet === 'GILING') p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "WASTE SAPUAN": item.w};
+                else if(currentSheet === 'THERMO') p = {...p, SHIFT: document.getElementById('shift-input').value, TF: item.tf, "NAMA PRODUK": item.prod, "SALDO AWAL": item.awal, MASUK: item.masuk, BOX: item.box, GRAM: item.gram, "BS SHEET": item.bs, "WASTE CUP": item.wcup, "SALDO AKHIR": item.akhir};
+                else if(currentSheet === 'EXTRUDER') p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "BS SHEET": item.bs, "WASTE BATU": item.wbatu, "WASTE SAPU": item.wsapu};
+                else if(currentSheet === 'TEHNIK') p = {...p, SHIFT: document.getElementById('shift-input').value, DIVISI: item.div, "DOWN TIME": item.dt, KETERANGAN: item.ket};
+                
+                await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(p) });
+            }
+            alert('Berhasil!'); switchSheet(currentSheet);
+        } catch(e) { alert('Error: ' + e); }
+        btn.disabled = false; btn.innerText = 'KIRIM DATA';
+    }
 </script>
 </body>
 </html>
