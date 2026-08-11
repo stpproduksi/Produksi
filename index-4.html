@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Produksi Panel v3</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0f1923; --surface: #1a2635; --border: #263447;
+            --accent: #00c9a7; --text: #e8f0fe; --muted: #7a90a8; --danger: #ff5c5c; --wa: #25D366;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding-bottom: 2rem; }
+        header { background: #0a3d62; padding: 1rem; text-align: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .container { padding: 1rem; max-width: 500px; margin: auto; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+        label { display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; font-weight: bold; }
+        input, select, textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); font-size: 0.9rem; margin-bottom: 0.8rem; }
+        .sheet-tabs { display: flex; gap: 5px; margin-bottom: 1rem; }
+        .tab { flex: 1; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--muted); font-size: 0.7rem; text-align: center; cursor: pointer; font-weight: bold; }
+        .tab.active { border-color: var(--accent); color: var(--accent); background: #0d2a24; }
+        .item-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 15px; position: relative; }
+        .btn-del { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
+        .cd-btn { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.7rem; color: var(--text); text-align: left; margin-bottom: 0.8rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-add { width: 100%; padding: 0.7rem; background: none; border: 1.5px dashed var(--accent); color: var(--accent); border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 1rem; }
+        .btn-submit { width: 100%; padding: 1rem; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .btn-wa { width: 100%; padding: 1rem; background: var(--wa); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 10px; display: none; text-align: center; text-decoration: none; }
+        #cd-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; }
+        #cd-sheet { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 1rem; max-height: 70vh; overflow-y: auto; color: black; }
+        .cd-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<header><h3>📊 PRODUKSI PANEL</h3></header>
+
+<div class="container">
+    <div class="card">
+        <label>URL Google Script</label>
+        <input type="url" id="webhookUrl" value="https://script.google.com/macros/s/AKfycbyvGbbRmzV7j7yJzhUrJUIWtSOsb9CAaCazX4Kz-eAX6jeACXanZgk7db1hUwWwZvqq/exec" placeholder="Tempel URL Script di sini">
+    </div>
+
+    <div class="sheet-tabs">
+        <div class="tab active" onclick="switchSheet('GILING')">GILING</div>
+        <div class="tab" onclick="switchSheet('THERMO')">THERMO</div>
+        <div class="tab" onclick="switchSheet('EXTRUDER')">EXTRUDER</div>
+        <div class="tab" onclick="switchSheet('TEHNIK')">TEHNIK</div>
+        <div class="tab" onclick="switchSheet('PELET')">PELET</div>
+    </div>
+
+    <div class="card">
+        <div id="common-fields">
+            <div class="field"><label>Tanggal</label><input type="date" id="tgl-input"></div>
+            <div id="shift-wrap" style="display:none"><label>Shift</label><select id="shift-input"><option value="">Pilih Shift</option><option>SHIFT 1</option><option>SHIFT 2</option><option>SHIFT 3</option></select></div>
+        </div>
+
+        <div id="items-container"></div>
+        <button class="btn-add" onclick="addNewItem()">+ TAMBAH DATA</button>
+
+        <label>Nama Penginput</label>
+        <input type="text" id="nama-input" placeholder="Nama Anda">
+
+        <button class="btn-submit" id="btnKirim" onclick="submitData()">KIRIM DATA</button>
+        <a id="btnWhatsApp" class="btn-wa" target="_blank">SHARE LAPORAN KE WA</a>
+    </div>
+</div>
+
+<div id="cd-overlay">
+    <div id="cd-sheet">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><b>Pilih Item</b><button onclick="closeCd()" style="border:none; background:none; font-size:1.2rem;">✕</button></div>
+        <input type="text" id="cd-search" placeholder="Cari atau ketik nama baru..." oninput="filterCd(this.value)" style="color:black; border:1px solid #ccc;">
+        <div id="cd-list"></div>
+    </div>
+</div>
+
+<script>
+    const BAHAN_LIST = ["AVALAN BARRY CRUSHER PP Kw1","AVALAN PREFORM","INNOPLUS","LD PETLIN N 125 Y","PP Avalan NATURAL GILINGAN","PP COSMO FY3012E","PP COSMOPLENE W531P","PP GRADE NSY114G-P","PP H456 JY","PP MASPLENE 3160","PP MASPLENE 3352","PP MASPLENE 3355","PP MASPLENE MAG 2160","PP MASPLENE MAG 3352","PP MASPLENE MAG 3355","AVALAN BOTOL CRUSHER PP Kw1","PP PETRON 1102K","PP PREFCHEM PH404","PP PUTIH (ASIA PLASTIK)","PP PUTIH SUSU (ANDY)","PP SABIC 5002P","PP SABIC 5052P","PP SCG ELPRO P 400 S","PP SCG ELPRO P 401 S","PP TRILENE HE 2.0 TF","PP TRILENE HY 3,8 FY","PP MOPLEN MIXEDGRADE","IPP RB 307 MO","PP MASPLENE 2158","PP MASPLENE 2159","LOTTE HOPELEN PP Y-130","PP GY130","PP SABIC PH 503","POE WANSUPER 5057","PP W331","JINNENG HP550J","PPH - T03","PPH - T035","PP T30S"];
+    const PRODUK_LIST = ["60 ML JELLY","90 ML JELLY","6 OZ NATURAL","8 OZ NATURAL","10 OZ NATURAL","12 OZ NATURAL","12 OZ NATURAL 7 gr","14 OZ NATURAL","16 OZ NATURAL","BAHAN PRINTING 5,5 gr","16 SLIM","18 SLIM 9 gr","18 SLIM 7,5 gr","18 SLIM 7,0 gr","22 SLIM 9 gr","22 SLIM 8,5 gr","22 SLIM 8,0 gr","22 SLIM 7,0 gr","SLOP PISAH 8,5 gr","22 SLIM BAHAN PRINTING 8,0 gr","BAHAN PRINTING 8,5 gr","18 BIG ISI 50 PCS 7,0 gr","18 BIG ISI 25 PCS 7,0 gr","22 BIG ISI 50 PCS 7,0 gr","22 BIG ISI 50 PCS 8 gr","22 BIG ISI 50 PCS 8,5 gr","26 BIG 8,0 gr BAHAN PRINTING @800","26 BIG ISI 25 PCS 8,0 gr","22 BIG ISI 50 PCS 8,0 gr BAHAN PRINTING","12 OVAL 5,0 gr ISI 50 PCS","14 OVAL 6,0 gr ISI 50 PCS","14 OVAL 6,0 GR PRINTING","16 OVAL 6,5 gr ISI 50 PCS","18 OVAL 7,0 gr ISI 50 PCS","22 OVAL 7,0 gr ISI 50 PCS","22 OVAL 8,0 gr ISI 50 PCS","8 SQUARE","12 SQUARE","16 SQUARE","22 SQUARE","8 SQUARE HANYA BODY","12 SQUARE HANYA BODY","16 SQUARE HANYA BODY","22 SQUARE HANYA BODY","TUTUP SQUARE","10 OZ HALLO REGULER","12 OZ HALLO REGULER","14 OZ HALLO REGULER","16 OZ HALLO REGULER","18 OZ HALLO BIG","18 OZ HALLO BIG 7GR TRIAL","22 OZ HALLO BIG 7GR TRIAL","22 OZ HALLO BIG","18 BIG HOK GITAR (MERAH)","22 BIG HOK GITAR (MERAH)","220 ML AMDK","120 ML RETAIL","180 ML RETAIL","220 ML RETAIL"];
+    const BAHAN_BAKU_LIST = ["REGRIND CUCIAN NATURAL","REGRIND CUCIAN MANGKAK","REGRIND CUCIAN PUTIH SUSU","REGRIND CUP PRINTING","REGRIND GILINGAN MEMBATU","BS STRAW PINK ATG","BS STRAW HIJAU ATG","BS STRAW BIRU ATG","BS STRAW KUNING ATG"];
+    const FINISH_GOOD_LIST = ["PELET PUTIH SUSU-CUP","PELET CUP PRINTING","PELET HITAM","PP PELET ABU-ABU","PP PELET HIJAU","PP PELET NATURAL","PP PELET HITAM","PP PELET BIRU","PELET STRAW APEL BIRU","PELET STRAW APEL HIJAU","PELET STRAW APEL KUNING","PELET STRAW APEL ORANGE","PELET STRAW APEL PINK"];
+
+    let currentSheet = 'GILING';
+    let dataItems = [];
+
+    window.onload = () => {
+        document.getElementById('tgl-input').value = new Date().toISOString().split('T')[0];
+        if(localStorage.getItem('webhook')) document.getElementById('webhookUrl').value = localStorage.getItem('webhook');
+        if(localStorage.getItem('nama')) document.getElementById('nama-input').value = localStorage.getItem('nama');
+        switchSheet('GILING');
+    };
+
+    function switchSheet(name) {
+        currentSheet = name;
+        dataItems = [];
+        document.getElementById('btnWhatsApp').style.display = 'none';
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.innerText === name));
+        document.getElementById('shift-wrap').style.display = (name === 'THERMO' || name === 'TEHNIK' || name === 'PELET') ? 'block' : 'none';
+        addNewItem();
+    }
+
+    function addNewItem() {
+        let obj = { id: Date.now() };
+        if(currentSheet === 'GILING') obj = {...obj, prod:'', s1:'', s2:'', s3:'', w:''};
+        else if(currentSheet === 'THERMO') obj = {...obj, tf:'', prod:'', awal:'', masuk:'', box:'', gram:'', bs:'', wcup:'', akhir:''};
+        else if(currentSheet === 'EXTRUDER') obj = {...obj, prod:'', s1:'', s2:'', s3:'', bs:'', wbatu:'', wsapu:''};
+        else if(currentSheet === 'TEHNIK') obj = {...obj, div:'', dt:'', ket:''};
+        else if(currentSheet === 'PELET') obj = {...obj, bahanBaku:'', ambil:'', waste:'', sisa:'', finishGood:''};
+        dataItems.push(obj);
+        renderItems();
+    }
+
+    function renderItems() {
+        const container = document.getElementById('items-container');
+        container.innerHTML = dataItems.map((item, i) => {
+            let html = `<div class="item-box"><button class="btn-del" onclick="dataItems.splice(${i},1);renderItems()">✕</button>`;
+            if(currentSheet !== 'TEHNIK' && currentSheet !== 'PELET') {
+                html += `<label>Item / Produk</label><button class="cd-btn" onclick="openCd(${i})">${item.prod || '— Pilih Item —'}</button>`;
+            }
+            if(currentSheet === 'GILING') {
+                html += `<div class="row2"><input type="number" placeholder="S1" oninput="dataItems[${i}].s1=this.value" value="${item.s1}"><input type="number" placeholder="S2" oninput="dataItems[${i}].s2=this.value" value="${item.s2}"></div><div class="row2"><input type="number" placeholder="S3" oninput="dataItems[${i}].s3=this.value" value="${item.s3}"><input type="number" placeholder="Waste" oninput="dataItems[${i}].w=this.value" value="${item.w}"></div>`;
+            } else if(currentSheet === 'THERMO') {
+                html += `<label>Mesin TF</label><select onchange="dataItems[${i}].tf=this.value"><option value="">Pilih</option>${['4','6','7','8','11P','11L'].map(v => `<option ${item.tf==='TF'+v?'selected':''}>TF${v}</option>`).join('')}</select>
+                <div class="row2"><input type="number" placeholder="Awal" oninput="dataItems[${i}].awal=this.value" value="${item.awal}"><input type="number" placeholder="Masuk" oninput="dataItems[${i}].masuk=this.value" value="${item.masuk}"></div>
+                <div class="row2"><input type="number" placeholder="Box" oninput="dataItems[${i}].box=this.value" value="${item.box}"><input type="number" placeholder="Gram" oninput="dataItems[${i}].gram=this.value" value="${item.gram}"></div>
+                <div class="row2"><input type="number" placeholder="BS" oninput="dataItems[${i}].bs=this.value" value="${item.bs}"><input type="number" placeholder="Waste Cup" oninput="dataItems[${i}].wcup=this.value" value="${item.wcup}"></div>
+                <input type="number" placeholder="Saldo Akhir" oninput="dataItems[${i}].akhir=this.value" value="${item.akhir}">`;
+            } else if(currentSheet === 'EXTRUDER') {
+                html += `<div class="row2"><input type="number" placeholder="S1" oninput="dataItems[${i}].s1=this.value" value="${item.s1}"><input type="number" placeholder="S2" oninput="dataItems[${i}].s2=this.value" value="${item.s2}"></div><div class="row2"><input type="number" placeholder="S3" oninput="dataItems[${i}].s3=this.value" value="${item.s3}"><input type="number" placeholder="BS" oninput="dataItems[${i}].bs=this.value" value="${item.bs}"></div><div class="row2"><input type="number" placeholder="W.Batu" oninput="dataItems[${i}].wbatu=this.value" value="${item.wbatu}"><input type="number" placeholder="W.Sapu" oninput="dataItems[${i}].wsapu=this.value" value="${item.wsapu}"></div>`;
+            } else if(currentSheet === 'TEHNIK') {
+                html += `<label>Divisi</label><select onchange="dataItems[${i}].div=this.value"><option value="">Pilih</option><option ${item.div==='GILING'?'selected':''}>GILING</option><option ${item.div==='THERMO'?'selected':''}>THERMO</option><option ${item.div==='EXTRUDER'?'selected':''}>EXTRUDER</option></select><input type="text" placeholder="Down Time" oninput="dataItems[${i}].dt=this.value" value="${item.dt}"><textarea placeholder="Keterangan" oninput="dataItems[${i}].ket=this.value">${item.ket}</textarea>`;
+            } else if(currentSheet === 'PELET') {
+                html += `<label>Bahan Baku</label><button type="button" class="cd-btn" onclick="openCd(${i},'bahanBaku')">${item.bahanBaku || '— Pilih Bahan Baku —'}</button>
+                <div class="row2"><input type="number" placeholder="Ambil Bahan" oninput="dataItems[${i}].ambil=this.value" value="${item.ambil}"><input type="number" placeholder="Waste" oninput="dataItems[${i}].waste=this.value" value="${item.waste}"></div>
+                <input type="number" placeholder="Sisa Bahan" oninput="dataItems[${i}].sisa=this.value" value="${item.sisa}">
+                <label>Finish Good</label><button type="button" class="cd-btn" onclick="openCd(${i},'finishGood')">${item.finishGood || '— Pilih Finish Good —'}</button>`;
+            }
+            return html + `</div>`;
+        }).join('');
+    }
+
+    let activeIdx = -1;
+    let activeField = 'prod';
+    function openCd(idx, field) { activeIdx = idx; activeField = field || 'prod'; document.getElementById('cd-overlay').style.display = 'flex'; document.getElementById('cd-search').value = ''; filterCd(''); }
+    function closeCd() { document.getElementById('cd-overlay').style.display = 'none'; }
+
+    function escQ(s) { return String(s).replace(/'/g, "\\'"); }
+
+    function pickList() {
+        if (currentSheet === 'GILING') return BAHAN_LIST;
+        if (currentSheet === 'PELET') return activeField === 'bahanBaku' ? BAHAN_BAKU_LIST : FINISH_GOOD_LIST;
+        return PRODUK_LIST;
+    }
+
+    function filterCd(q) {
+        const list = pickList();
+        const filtered = list.filter(s => s.toLowerCase().includes(q.toLowerCase()));
+        let html = filtered.map(s => `<div class="cd-item" onclick="selectItem('${escQ(s)}')">${s}</div>`).join('');
+        const qTrim = q.trim();
+        if (qTrim && !list.some(s => s.toLowerCase() === qTrim.toLowerCase())) {
+            html = `<div class="cd-item" style="color:#00897b;font-weight:bold;" onclick="selectItem('${escQ(qTrim)}')">+ Tambah produk baru: "${qTrim}"</div>` + html;
+        }
+        document.getElementById('cd-list').innerHTML = html || '<div style="padding:15px;color:#888;">Tidak ada. Ketik nama baru di atas lalu pilih "+ Tambah produk baru"</div>';
+    }
+
+    function selectItem(val) { dataItems[activeIdx][activeField] = val; closeCd(); renderItems(); }
+
+    async function submitData() {
+        const url = document.getElementById('webhookUrl').value;
+        const nama = document.getElementById('nama-input').value;
+        const tgl = document.getElementById('tgl-input').value;
+        const shift = document.getElementById('shift-input').value;
+        if(!url || !nama) return alert('URL dan Nama wajib diisi!');
+
+        localStorage.setItem('webhook', url); localStorage.setItem('nama', nama);
+        const btn = document.getElementById('btnKirim');
+        btn.disabled = true; btn.innerText = 'Mengirim...';
+
+        let msg = `*LAPORAN PRODUKSI - ${currentSheet}*\n📅 Tgl: ${tgl}\n👤 Oleh: ${nama}\n${shift ? '🕒 Shift: '+shift+'\n' : ''}--------------------------------\n`;
+        let okCount = 0, failList = [];
+
+        for(let item of dataItems) {
+            let p = { _sheet: currentSheet, TANGGAL: tgl, NAMA: nama };
+            let label = item.prod || item.div || '-';
+            if(currentSheet === 'GILING') {
+                p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "WASTE SAPUAN": item.w};
+                msg += `📦 *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nW: ${item.w}\n\n`;
+            }
+            else if(currentSheet === 'THERMO') {
+                p = {...p, SHIFT: shift, TF: item.tf, "NAMA PRODUK": item.prod, "SALDO AWAL": item.awal, MASUK: item.masuk, BOX: item.box, GRAM: item.gram, "BS SHEET": item.bs, "WASTE CUP": item.wcup, "SALDO AKHIR": item.akhir};
+                msg += `📟 *${item.tf} - ${item.prod}*\nBox: ${item.box} | Gr: ${item.gram}\nBS: ${item.bs} | WC: ${item.wcup}\n\n`;
+            }
+            else if(currentSheet === 'EXTRUDER') {
+                p = {...p, "NAMA PRODUK": item.prod, SHIFT1: item.s1, SHIFT2: item.s2, SHIFT3: item.s3, "BS SHEET": item.bs, "WASTE BATU": item.wbatu, "WASTE SAPU": item.wsapu};
+                msg += `🏗️ *${item.prod}*\nS1: ${item.s1} | S2: ${item.s2} | S3: ${item.s3}\nBS: ${item.bs}\n\n`;
+            }
+            else if(currentSheet === 'TEHNIK') {
+                p = {...p, SHIFT: shift, DIVISI: item.div, "DOWN TIME": item.dt, KETERANGAN: item.ket};
+                msg += `🛠️ *${item.div}*\nDT: ${item.dt}\nKet: ${item.ket}\n\n`;
+            }
+            else if(currentSheet === 'PELET') {
+                p = {...p, SHIFT: shift, "BAHAN BAKU": item.bahanBaku, "AMBIL BAHAN": item.ambil, "WASTE": item.waste, "SISA BAHAN": item.sisa, "FINISH GOOD": item.finishGood};
+                label = item.bahanBaku || item.finishGood || '-';
+                msg += `♻️ *${item.bahanBaku}* → *${item.finishGood}*\nAmbil: ${item.ambil} | Waste: ${item.waste} | Sisa: ${item.sisa}\n\n`;
+            }
+
+            try {
+                const res = await fetch(url, { method: 'POST', body: JSON.stringify(p) });
+                const text = (await res.text()).trim();
+                if (text === 'OK' || text === 'UPDATED') {
+                    okCount++;
+                } else {
+                    failList.push(`${label}: ${text || 'gagal'}`);
+                }
+            } catch(err) {
+                failList.push(`${label}: koneksi gagal`);
+            }
+        }
+
+        if (failList.length === 0) {
+            alert(`✅ Semua data (${okCount}) berhasil masuk ke Sheets!`);
+        } else {
+            alert(`⚠️ ${okCount} berhasil, ${failList.length} GAGAL:\n\n${failList.join('\n')}`);
+        }
+
+        const btnWA = document.getElementById('btnWhatsApp');
+        btnWA.href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+        btnWA.style.display = 'block';
+
+        btn.disabled = false; btn.innerText = 'KIRIM DATA';
+    }
+</script>
+</body>
+</html>
